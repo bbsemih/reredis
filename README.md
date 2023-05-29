@@ -1,2 +1,3 @@
 # reredis
-Re-implementation of Redis in Golang!
+
+Implementation of Redis in Golang by using the Redis Serialization Protocol (RESP).
