@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bufio"
+	"fmt"
+)
+
 type Type byte
 
 const (
@@ -34,4 +39,30 @@ func (v Value) Array() []Value {
 	return []Value{}
 }
 
-//TODO DecodeResp
+// This parses a RESP message and returns a RedisValue
+func DecodeRESP(byteStream *bufio.Reader) (Value, error) {
+	dataTypeByte, err := byteStream.ReadByte()
+	if err != nil {
+		return Value{}, err
+	}
+
+	switch string(dataTypeByte) {
+	case "+":
+		return decodeSimpleString(byteStream)
+	case "$":
+		return decodeBulkString(byteStream)
+	case "*":
+		return decodeArray(byteStream)
+	}
+	return Value{}, fmt.Errorf("invalid RESP data type byte: %s", string(dataTypeByte))
+}
+
+func decodeSimpleString(byteStream *bufio.Reader) (Value, error) {
+}
+
+func decodeBulkString(byteStream *bufio.Reader) (Value, error) {
+}
+
+func decodeArray(byteStream *bufio.Reader) (Value, error) {
+
+}
