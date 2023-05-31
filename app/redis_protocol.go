@@ -58,11 +58,42 @@ func DecodeRESP(byteStream *bufio.Reader) (Value, error) {
 }
 
 func decodeSimpleString(byteStream *bufio.Reader) (Value, error) {
+	readBytes, err := readUntilCRLF(byteStream)
+	if err != nil {
+		return Value{}, err
+	}
+	return Value{
+		typ:   SimpleString,
+		bytes: readBytes,
+	}, nil
 }
 
+// BulkString --> $5\r\nhello\r\n
+// we want to get "hello"
 func decodeBulkString(byteStream *bufio.Reader) (Value, error) {
+	//TODO
 }
 
+// "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n"
 func decodeArray(byteStream *bufio.Reader) (Value, error) {
+	//TODO
+}
 
+// CRLF --> CR (Carriage Return(\r)) LF (Line Feed\l)
+// Result of input "Hello\nWorld\nThis is a test\r\n" would be
+// Hello World This is a test
+func readUntilCRLF(byteStream *bufio.Reader) ([]byte, error) {
+	readBytes := []byte{}
+	for {
+		//returning a slice containing the data up to and including the delimiter
+		b, err := byteStream.ReadBytes('\n')
+		if err != nil {
+			return nil, err
+		}
+		readBytes = append(readBytes, b...)
+		if len(readBytes) >= 2 && readBytes[len(readBytes)-2] == '\r' {
+			break
+		}
+	}
+	return readBytes[:len(readBytes)-2], nil
 }
