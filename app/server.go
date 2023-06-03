@@ -16,18 +16,20 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+
+	storage := NewStorage()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error occured while accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		go handleConnection(conn)
+		go handleConnection(conn, storage)
 	}
 }
 
 // redis uses RESP as its protocol
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, storage *Storage) {
 	defer conn.Close()
 	for {
 		// This parses a RESP message and returns a RedisValue
@@ -43,12 +45,18 @@ func handleConnection(conn net.Conn) {
 		args := value.Array()[1:]
 
 		switch command {
-		case "PING":
+		case "ping":
 			conn.Write([]byte("+PONG\r\n"))
 		//ECHO format in resp is: *2\r\n$4\r\nECHO\r\n$6\r\nfoobar\r\n
 		//args: ["ECHO","ONE","TWO"]
-		case "ECHO":
-			conn.Write([]byte(fmt.Sprintf("$%\r\n%s\r\n", len(args[0].String()), args[0].String())))
+		case "echo":
+			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
+		//SET <key> <value>
+		case "get":
+			conn.Write([]byte(fmt.Sprintf("+%s\r\n", storage.Get(args[0].String()))))
+		case "set":
+			storage.Set(args[0].String(), args[1].String())
+			conn.Write([]byte("+OK\r\n"))
 		default:
 			conn.Write([]byte("-ERR unknown command '" + command + "'\r\n"))
 		}
