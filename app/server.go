@@ -26,10 +26,11 @@ func main() {
 	}
 }
 
-// redis uses resp as its protocol
+// redis uses RESP as its protocol
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	for {
+		// This parses a RESP message and returns a RedisValue
 		value, err := DecodeRESP(bufio.NewReader(conn))
 		if errors.Is(err, io.EOF) {
 			break

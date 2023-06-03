@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"strconv"
 )
 
 type Type byte
@@ -69,14 +71,51 @@ func decodeSimpleString(byteStream *bufio.Reader) (Value, error) {
 }
 
 // BulkString --> $5\r\nhello\r\n
-// we want to get "hello"
 func decodeBulkString(byteStream *bufio.Reader) (Value, error) {
-	//TODO
+	readBytesForCount, err := readUntilCRLF(byteStream)
+	if err != nil {
+		return Value{}, fmt.Errorf("failed to bulk string length: %s", err)
+	}
+	//Atoi = to integer - Itoa = to string
+	count, err := strconv.Atoi(string(readBytesForCount))
+	if err != nil {
+		return Value{}, fmt.Errorf("failed to bulk string length: %s", err)
+	}
+	//Create a byte slice with the appropriate length to store the bulk string contents
+	readBytes := make([]byte, count+2)
+
+	if _, err := io.ReadFull(byteStream, readBytes); err != nil {
+		return Value{}, fmt.Errorf("failed to read bulk string contents: %s", err)
+	}
+	return Value{
+		typ:   BulkString,
+		bytes: readBytes[:count],
+	}, nil
 }
 
 // "*2\r\n$5\r\nhello\r\n$5\r\nworld\r\n"
 func decodeArray(byteStream *bufio.Reader) (Value, error) {
-	//TODO
+	readBytesForCount, err := readUntilCRLF(byteStream)
+	if err != nil {
+		return Value{}, fmt.Errorf("failed to bulk string length: %s", err)
+	}
+	count, err := strconv.Atoi(string(readBytesForCount))
+	if err != nil {
+		return Value{}, fmt.Errorf("failed to parse bulk string length: %s", err)
+	}
+	array := []Value{}
+
+	for i := 1; i < count; i++ {
+		value, err := DecodeRESP(byteStream)
+		if err != nil {
+			return Value{}, err
+		}
+		array = append(array, value)
+	}
+	return Value{
+		typ:   Array,
+		array: array,
+	}, nil
 }
 
 // CRLF --> CR (Carriage Return(\r)) LF (Line Feed\l)
