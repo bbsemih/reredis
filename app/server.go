@@ -43,20 +43,22 @@ func handleConnection(conn net.Conn, storage *Storage) {
 			fmt.Println("Error decoding RESP: ", err.Error())
 			return
 		}
-		command, err := value.Array()[0].String()
+		command := value.Array()[0].String()
 		args := value.Array()[1:]
 
 		switch command {
 		case "ping":
 			conn.Write([]byte("+PONG\r\n"))
-		//ECHO format in resp is: *2\r\n$4\r\nECHO\r\n$6\r\nfoobar\r\n
-		//args: ["ECHO","ONE","TWO"]
+			//ECHO format in resp is: *2\r\n$4\r\nECHO\r\n$6\r\nfoobar\r\n
+			//args: ["ECHO","ONE","TWO"]
+			//----------TODO-------------
+			//del? lists?
 		case "echo":
 			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
 		case "get":
 			value, found := storage.Get(args[0].String())
 			if found {
-				conn.Write([]byte(fmt.Sprint("$%d\r\n%s\r\n", len(value), value)))
+				conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(value), value)))
 			} else {
 				conn.Write([]byte("$-1\r\n"))
 			}
@@ -67,7 +69,7 @@ func handleConnection(conn net.Conn, storage *Storage) {
 					expiryStr := args[3].String()
 					expiryInMlSeconds, err := strconv.Atoi(expiryStr)
 					if err != nil {
-						conn.Write([]byte(fmt.Sprintf("-ERR PX value is not an integer\r\n", expiryStr)))
+						conn.Write([]byte(fmt.Sprint("-ERR PX value is not an integer\r\n", expiryStr)))
 						break
 					}
 					storage.SetWithExpiry(args[0].String(), args[1].String(), time.Duration(expiryInMlSeconds)*time.Millisecond)

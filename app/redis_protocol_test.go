@@ -13,7 +13,7 @@ func TestDecodeSimpleString(t *testing.T) {
 		t.Errorf("error decoding simple string: %s", err)
 	}
 	if value.typ != SimpleString {
-		t.Errorf("expected SimpleString, got: %s", value.typ)
+		t.Errorf("expected SimpleString, got: %v", value.typ)
 	}
 	if value.String() != "rob" {
 		t.Errorf("expected 'robpike', got '%s'", value.String())
