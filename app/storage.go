@@ -46,3 +46,12 @@ func (kv *Storage) SetWithExpiry(key string, value string, expiry time.Duration)
 		expiresAt: time.Now().Add(expiry),
 	}
 }
+
+func (kv *Storage) Delete(key string) bool {
+	_, exists := kv.data[key]
+	if exists {
+		delete(kv.data, key)
+		return true
+	}
+	return false
+}

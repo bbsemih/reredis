@@ -50,9 +50,14 @@ func handleConnection(conn net.Conn, storage *Storage) {
 		case "ping":
 			conn.Write([]byte("+PONG\r\n"))
 			//ECHO format in resp is: *2\r\n$4\r\nECHO\r\n$6\r\nfoobar\r\n
-			//args: ["ECHO","ONE","TWO"]
-			//----------TODO-------------
-			//del? lists?
+			//lists?
+		case "del":
+			deleted := storage.Delete(args[0].String())
+			if deleted {
+				conn.Write([]byte(":1\r\n"))
+			} else {
+				conn.Write([]byte(":0\r\n"))
+			}
 		case "echo":
 			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
 		case "get":
